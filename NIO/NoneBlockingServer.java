@@ -30,6 +30,7 @@ public class NoneBlockingServer {
     //init
     server.socket().bind(new InetSocketAddress(9999));
     server.configureBlocking(false);
+    String myAddr =  server.socket().getInetAddress().getHostAddress();
     
     //register
     server.register(selector, SelectionKey.OP_ACCEPT);
@@ -41,7 +42,7 @@ public class NoneBlockingServer {
      
      while(keysIter.hasNext()) {
        SelectionKey key = keysIter.next();
-       //keysIter.remove();
+       keysIter.remove();
        
        SelectableChannel channel = key.channel();
        
@@ -72,6 +73,15 @@ public class NoneBlockingServer {
              System.out.println("Closed");
              socket.close();
              key.cancel();
+             continue;
+           }
+           buffer.clear();
+           buffer.put(("Reply from server <" + myAddr + ">").getBytes("UTF-8"));
+           
+           buffer.flip();
+           
+           while(buffer.hasRemaining()) {
+             sc.write(buffer);
            }
          } else {
            System.out.println("WARN: " + "Readable - peer <"
@@ -80,7 +90,6 @@ public class NoneBlockingServer {
        } else if (key.isWritable()) {
          System.out.println("INFO: " + "Writable - ");
        }
-       keysIter.remove();
      }
      
      
